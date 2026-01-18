@@ -1,0 +1,27 @@
+{
+  "meta": {
+    "exportedAt": "2026-01-17T17:08:59.833Z",
+    "totalItems": 1,
+    "totalCategories": 1,
+    "schemaVersion": "1.0",
+    "checksum": "400612dc9a67f1f1fcd95668006bd9a80c6d0a17"
+  },
+  "categories": [
+    {
+      "name": "cofe",
+      "slug": "cofe",
+      "image": "Screenshot_130__1768667215878.webp"
+    }
+  ],
+  "items": [
+    {
+      "id": 1001,
+      "title": "capucin",
+      "categorySlug": "cofe",
+      "categoryName": "cofe",
+      "price": 450,
+      "image": "tooldev-dns_1768667393903.webp",
+      "isActive": true
+    }
+  ]
+}

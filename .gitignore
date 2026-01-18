@@ -1,0 +1,185 @@
+# Node.js backend .gitignore file
+
+# Dependencies
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
+# Build outputs
+dist/
+build/
+out/
+.output/
+.next/
+
+# Runtime data
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.pid
+*.seed
+*.pid.lock
+*.tsbuildinfo
+
+# Coverage directory used by tools like istanbul
+coverage/
+.nyc_output/
+
+# Dependency directories
+.jest/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+*.temp
+
+# Uploads directory
+uploads/
+media/
+public/uploads/
+public/media/
+storage/uploads/
+
+# Cache directories
+.cache/
+.tmp/
+.npm/
+.yarn/
+.pnpm/
+
+# Editor directories and files
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.swp
+*.swo
+*~
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+dump.rdb
+redis-dump.rdb
+mongodump/
+
+# SSL/TLS certificates
+*.pem
+*.crt
+*.key
+*.csr
+
+# Testing
+.jest/
+.nyc_output/
+
+# TypeScript
+*.tsbuildinfo
+
+# Package manager specific
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+shrinkwrap.yaml
+
+# Docker
+.dockerignore
+Dockerfile
+docker-compose.yml
+docker-compose.*.yml
+docker-compose.override.yml
+
+# CI/CD
+.circleci/
+.github/
+.gitlab-ci.yml
+.travis.yml
+.azure-pipelines/
+.codesandbox/
+
+# Documentation
+docs/_build/
+docs/_static/
+
+# Vercel
+.vercel/
+
+# Netlify
+.netlify/
+
+# Serverless
+.serverless/
+
+# Backup files
+*.bak
+*.backup
+
+# Compression files
+*.gz
+*.zip
+*.tar
+*.tgz
+*.rar
+*.7z
+
+# Image/Media caches
+.cache/
+.thumbnails/
+
+# Project specific (customize as needed)
+uploads/         # User uploaded files
+temp/            # Temporary processing files
+config/local.js  # Local configuration
+data/            # Local development data
+seeds/           # Database seeds
+migrations/      # Database migrations (if using ORM that generates them)
+
+# Development tools
+.eslintcache
+.stylelintcache
+.prettiercache
+
+# Performance monitoring
+*.cpuprofile
+*.heapsnapshot
+
+# IDE settings (optional to commit)
+.vscode/settings.json
+.vscode/extensions.json
+.vscode/launch.json
