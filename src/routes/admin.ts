@@ -1,4 +1,4 @@
-import { Router } from 'express';
+﻿import { Router } from 'express';
 import {
   createCategory,
   createItem,
@@ -6,6 +6,7 @@ import {
   deleteItem,
   getCategories,
   getItems,
+  importMenuFromPublicJson,
   login,
   media,
   publish,
@@ -39,6 +40,11 @@ export function adminRouter(publicDir: string) {
   r.post('/upload', upload.any(), uploadWebp);
   r.get('/media', media);
   r.post('/publish', publish);
+
+  // ✅ NEW: JSON -> Mongo import
+  // Reads: public/data/menu.json
+  // Writes: Category + Item collections (upsert)
+  r.post('/import/menu', importMenuFromPublicJson);
 
   return r;
 }

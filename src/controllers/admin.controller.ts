@@ -1,8 +1,8 @@
 import bcrypt from 'bcrypt';
-import fs from 'fs';
-import path from 'path';
 import type { Request, Response } from 'express';
+import fs from 'fs';
 import jwt from 'jsonwebtoken';
+import path from 'path';
 import sharp from 'sharp';
 
 import { ENV } from '../config/env';
@@ -18,6 +18,36 @@ async function ensureHash() {
   if (!passHash) passHash = await bcrypt.hash(ENV.ADMIN_PASSWORD, 10);
 }
 
+function safeStr(v: any, max = 255) {
+  const s = (v ?? '').toString().trim();
+  if (!s) return '';
+  return s.length > max ? s.slice(0, max) : s;
+}
+
+function safeNum(v: any, fallback = 0) {
+  const n = typeof v === 'number' ? v : Number(String(v).replace(/[^\d.-]/g, ''));
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function buildPublicBase(req: Request) {
+  // Prefer ENV.PUBLIC_BASE_URL; fallback to request origin
+  const envBase = safeStr((ENV as any).PUBLIC_BASE_URL);
+  if (envBase) return envBase.replace(/\/+$/, '');
+  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'http';
+  const host = req.headers['x-forwarded-host'] || req.headers.host;
+  return `${proto}://${host}`.replace(/\/+$/, '');
+}
+
+function imageAbs(req: Request, v: string) {
+  const base = buildPublicBase(req);
+  const s = safeStr(v);
+  if (!s) return '';
+  if (/^https?:\/\//i.test(s)) return s;
+  if (s.startsWith('/images/')) return `${base}${s}`;
+  return `${base}/images/menu/${encodeURIComponent(s)}`;
+}
+
+/* Auth */
 export async function login(req: Request, res: Response) {
   await ensureHash();
   const { email, password } = req.body as { email: string; password: string };
@@ -30,10 +60,25 @@ export async function login(req: Request, res: Response) {
   return res.json({ token });
 }
 
-/* Categories */
-export async function getCategories(_req: Request, res: Response) {
+/* --------------------------
+   Categories
+-------------------------- */
+export async function getCategories(req: Request, res: Response) {
   const list = await Category.find().sort({ name: 1 }).lean();
-  return res.json(list);
+
+  // ✅ Aliases for different frontends:
+  // - image (db)
+  // - img (legacy UI)
+  // - category (legacy UI expects slug/category field)
+  // - imageUrl (absolute url to render <img src="..."> safely)
+  const out = list.map((c: any) => ({
+    ...c,
+    img: c.image || '',
+    category: c.slug || c.name || '',
+    imageUrl: c.image ? imageAbs(req, c.image) : '',
+  }));
+
+  return res.json(out);
 }
 
 export async function createCategory(req: Request, res: Response) {
@@ -51,7 +96,7 @@ export async function createCategory(req: Request, res: Response) {
   const doc = await Category.create({
     name: name.trim(),
     slug,
-    image: (image || '').trim(),
+    image: safeStr(image),
   });
 
   return res.status(201).json(doc);
@@ -108,10 +153,19 @@ export async function deleteCategory(req: Request, res: Response) {
   return res.json({ ok: true });
 }
 
-/* Items */
+/* --------------------------
+   Items
+-------------------------- */
 export async function getItems(_req: Request, res: Response) {
   const items = await Item.find().sort({ id: -1 }).lean();
-  return res.json(items);
+
+  // ✅ Alias for old app schema: "category"
+  const out = items.map((it: any) => ({
+    ...it,
+    category: it.categorySlug || it.categoryName || '',
+  }));
+
+  return res.json(out);
 }
 
 export async function createItem(req: Request, res: Response) {
@@ -126,8 +180,8 @@ export async function createItem(req: Request, res: Response) {
     title: String(title).trim(),
     categorySlug: cat.slug,
     categoryName: cat.name,
-    price,
-    image: (image || '').trim(),
+    price: safeNum(price, 0),
+    image: safeStr(image),
     isActive: isActive !== false,
   });
 
@@ -163,11 +217,14 @@ export async function deleteItem(req: Request, res: Response) {
   return res.json({ ok: true });
 }
 
-/* Upload: category/item images */
+/* --------------------------
+   Upload: category/item images
+-------------------------- */
 export async function uploadWebp(req: Request, res: Response) {
   // Multer may populate req.file (single) or req.files (any/fields).
-  const f = ((req as any).file as Express.Multer.File | undefined)
-    ?? (((req as any).files as Express.Multer.File[] | undefined)?.[0]);
+  const f =
+    ((req as any).file as Express.Multer.File | undefined) ??
+    ((req as any).files as Express.Multer.File[] | undefined)?.[0];
 
   if (!f) return res.status(400).json({ error: 'No file uploaded. Field name must be "image".' });
 
@@ -192,18 +249,143 @@ export async function uploadWebp(req: Request, res: Response) {
 
   await fs.promises.unlink(f.path).catch(() => {});
 
-  return res.json({ filename, url: `/images/menu/${filename}` });
+  const url = `/images/menu/${filename}`;
+  return res.json({
+    success: true,
+    filename,
+    url,
+    absoluteUrl: imageAbs(req, url),
+  });
 }
 
-/* Media */
+/* --------------------------
+   Media
+-------------------------- */
 export async function media(req: Request, res: Response) {
   const publicDir = req.app.get('publicDir') as string;
   return res.json(listMediaFiles(publicDir));
 }
 
-/* Publish */
+/* --------------------------
+   Publish
+-------------------------- */
 export async function publish(req: Request, res: Response) {
   const publicDir = req.app.get('publicDir') as string;
   const r = await publishAll(publicDir);
   return res.json(r);
+}
+
+/* --------------------------
+   ✅ NEW: Import public/data/menu.json -> Mongo
+   - upsert categories by slug
+   - upsert items by id (NOT _id)
+-------------------------- */
+export async function importMenuFromPublicJson(req: Request, res: Response) {
+  try {
+    const publicDir = (req.app.get('publicDir') as string) || path.join(process.cwd(), 'public');
+    const filePath = path.join(publicDir, 'data', 'menu.json');
+
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({ error: 'menu.json not found', filePath });
+    }
+
+    const raw = fs.readFileSync(filePath, 'utf8');
+    const data = JSON.parse(raw);
+
+    const categoriesRaw = Array.isArray(data?.categories) ? data.categories : [];
+    const itemsRaw = Array.isArray(data?.items) ? data.items : [];
+
+    if (!itemsRaw.length) return res.status(400).json({ error: 'menu.json items is empty' });
+
+    // Normalize categories (supports {name,slug,image} and legacy)
+    const catBySlug = new Map<string, { name: string; slug: string; image: string }>();
+    for (const c of categoriesRaw) {
+      const name = safeStr(c?.name ?? c?.category, 80);
+      const slug = safeStr(c?.slug ?? c?.category, 120) || slugify(name);
+      const image = safeStr(c?.image ?? c?.img, 255);
+      if (!name || !slug) continue;
+      catBySlug.set(slug, { name, slug, image });
+    }
+
+    // Normalize items (supports your schema)
+    const normalizedItems = itemsRaw
+      .map((it: any) => {
+        const id = safeNum(it?.id, NaN);
+        const title = safeStr(it?.title, 140);
+        const categorySlug =
+          safeStr(it?.categorySlug, 120) || slugify(safeStr(it?.categoryName ?? it?.category, 80));
+        const categoryName = safeStr(it?.categoryName ?? it?.category, 80) || categorySlug;
+        const price = safeNum(it?.price, 0);
+        const image = safeStr(it?.image, 255);
+        const isActive = typeof it?.isActive === 'boolean' ? it.isActive : true;
+
+        if (!Number.isFinite(id) || !title || !categorySlug) return null;
+
+        // Ensure category exists
+        if (!catBySlug.has(categorySlug)) {
+          catBySlug.set(categorySlug, { name: categoryName, slug: categorySlug, image: '' });
+        }
+
+        return { id, title, categorySlug, categoryName, price, image, isActive };
+      })
+      .filter(Boolean) as Array<{
+      id: number;
+      title: string;
+      categorySlug: string;
+      categoryName: string;
+      price: number;
+      image: string;
+      isActive: boolean;
+    }>;
+
+    if (!normalizedItems.length) {
+      return res.status(400).json({ error: 'No valid items after normalization' });
+    }
+
+    const categoriesToUpsert = Array.from(catBySlug.values());
+
+    const catOps = categoriesToUpsert.map(c => ({
+      updateOne: {
+        filter: { slug: c.slug },
+        update: { $set: { name: c.name, slug: c.slug, image: c.image } },
+        upsert: true,
+      },
+    }));
+
+    const itemOps = normalizedItems.map(it => ({
+      updateOne: {
+        filter: { id: it.id },
+        update: { $set: it },
+        upsert: true,
+      },
+    }));
+
+    const [catResult, itemResult] = await Promise.all([
+      Category.bulkWrite(catOps, { ordered: false }),
+      Item.bulkWrite(itemOps, { ordered: false }),
+    ]);
+
+    return res.json({
+      ok: true,
+      source: filePath,
+      imported: {
+        categories: categoriesToUpsert.length,
+        items: normalizedItems.length,
+      },
+      mongo: {
+        categories: {
+          upserted: (catResult as any).upsertedCount ?? 0,
+          modified: (catResult as any).modifiedCount ?? 0,
+          matched: (catResult as any).matchedCount ?? 0,
+        },
+        items: {
+          upserted: (itemResult as any).upsertedCount ?? 0,
+          modified: (itemResult as any).modifiedCount ?? 0,
+          matched: (itemResult as any).matchedCount ?? 0,
+        },
+      },
+    });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message || 'import failed' });
+  }
 }
