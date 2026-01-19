@@ -9,7 +9,7 @@ import { ENV } from './config/env';
 import { connectMongo } from './config/mongo';
 import { errorHandler, notFound } from './middleware/error';
 import { adminRouter } from './routes/admin';
-
+import { publicRouter } from './routes/public';
 async function main() {
   await connectMongo();
 
@@ -89,7 +89,7 @@ async function main() {
 
   app.use(notFound);
   app.use(errorHandler);
-
+  app.use(publicRouter);
   app.listen(ENV.PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Backend running: http://localhost:${ENV.PORT}`);
