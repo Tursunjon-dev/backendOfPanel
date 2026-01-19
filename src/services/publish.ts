@@ -3,13 +3,16 @@ import fs from 'fs';
 import path from 'path';
 import Category from '../models/Category';
 import Item from '../models/Item';
-import { nextSeq } from './nextId';
+import { nextSeq, setSeqAtLeast } from './seq';
 
-function sha256(obj: unknown) {
-  const s = JSON.stringify(obj);
-  return crypto.createHash('sha256').update(s).digest('hex');
+function sha1(s: string) {
+  return crypto.createHash('sha1').update(s).digest('hex');
 }
 
+/**
+ * Writes /public/data/menu.json and /public/data/version.json
+ * version.json has monotonic "version" so mobile apps can check updates easily.
+ */
 export async function publishAll(publicDir: string) {
   const dataDir = path.join(publicDir, 'data');
   fs.mkdirSync(dataDir, { recursive: true });
@@ -25,15 +28,14 @@ export async function publishAll(publicDir: string) {
       totalItems: items.length,
       totalCategories: cats.length,
       schemaVersion: '1.0',
+      checksum: '',
     },
     categories: cats.map(c => ({
-      _id: String(c._id),
       name: c.name,
       slug: c.slug,
       image: c.image || '',
     })),
     items: items.map(i => ({
-      _id: String(i._id),
       id: i.id,
       title: i.title,
       categorySlug: i.categorySlug,
@@ -44,22 +46,30 @@ export async function publishAll(publicDir: string) {
     })),
   };
 
-  const checksum = sha256(payload);
-  const menuJson = { ...payload, meta: { ...payload.meta, checksum } };
+  const jsonNoChecksum = JSON.stringify({ ...payload, meta: { ...payload.meta, checksum: '' } });
+  const checksum = sha1(jsonNoChecksum);
+  payload.meta.checksum = checksum;
 
-  fs.writeFileSync(path.join(dataDir, 'menu.json'), JSON.stringify(menuJson, null, 2), 'utf8');
+  // Monotonic menu version
+  // Also ensure it never goes backwards if user imported a menu with higher version.
+  const version = await nextSeq('menu_version');
 
-  // A simple monotonically increasing version helps clients detect updates
-  // even if HTTP caches serve stale responses.
-  const versionNumber = await nextSeq('menu_version');
-  const version = {
-    version: versionNumber,
-    exportedAt: menuJson.meta.exportedAt,
-    checksum,
-    totalItems: payload.meta.totalItems,
-    totalCategories: payload.meta.totalCategories,
-  };
-  fs.writeFileSync(path.join(dataDir, 'version.json'), JSON.stringify(version, null, 2), 'utf8');
+  fs.writeFileSync(path.join(dataDir, 'menu.json'), JSON.stringify(payload, null, 2), 'utf8');
+  fs.writeFileSync(
+    path.join(dataDir, 'version.json'),
+    JSON.stringify({ version, exportedAt: payload.meta.exportedAt, checksum }, null, 2),
+    'utf8'
+  );
 
-  return { ok: true, checksum, version };
+  return { ok: true, version, exportedAt: payload.meta.exportedAt, checksum };
+}
+
+/**
+ * If you import menu.json from disk (or elsewhere), call this to bump the version.
+ */
+export async function bumpMenuVersion(minVersion?: number) {
+  if (typeof minVersion === 'number' && Number.isFinite(minVersion)) {
+    await setSeqAtLeast('menu_version', Math.floor(minVersion));
+  }
+  return nextSeq('menu_version');
 }

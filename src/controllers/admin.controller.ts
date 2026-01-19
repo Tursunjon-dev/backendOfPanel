@@ -1,15 +1,15 @@
 import bcrypt from 'bcrypt';
-import type { Request, Response } from 'express';
 import fs from 'fs';
-import jwt from 'jsonwebtoken';
 import path from 'path';
+import type { Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import sharp from 'sharp';
+
 import { ENV } from '../config/env';
 import Category from '../models/Category';
 import Item from '../models/Item';
 import { listMediaFiles } from '../services/media';
-import { ensureSeqAtLeast, nextSeq } from '../services/nextId';
-import type { Multer } from 'multer';
+import { nextSeq, setSeqAtLeast } from '../services/seq';
 import { publishAll } from '../services/publish';
 import { slugify } from '../services/slug';
 
@@ -18,36 +18,9 @@ async function ensureHash() {
   if (!passHash) passHash = await bcrypt.hash(ENV.ADMIN_PASSWORD, 10);
 }
 
-function safeStr(v: any, max = 255) {
-  const s = (v ?? '').toString().trim();
-  if (!s) return '';
-  return s.length > max ? s.slice(0, max) : s;
-}
-
-function safeNum(v: any, fallback = 0) {
-  const n = typeof v === 'number' ? v : Number(String(v).replace(/[^\d.-]/g, ''));
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function buildPublicBase(req: Request) {
-  // Prefer ENV.PUBLIC_BASE_URL; fallback to request origin
-  const envBase = safeStr((ENV as any).PUBLIC_BASE_URL);
-  if (envBase) return envBase.replace(/\/+$/, '');
-  const proto = (req.headers['x-forwarded-proto'] as string) || req.protocol || 'http';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  return `${proto}://${host}`.replace(/\/+$/, '');
-}
-
-function imageAbs(req: Request, v: string) {
-  const base = buildPublicBase(req);
-  const s = safeStr(v);
-  if (!s) return '';
-  if (/^https?:\/\//i.test(s)) return s;
-  if (s.startsWith('/images/')) return `${base}${s}`;
-  return `${base}/images/menu/${encodeURIComponent(s)}`;
-}
-
-/* Auth */
+// -----------------
+// Auth
+// -----------------
 export async function login(req: Request, res: Response) {
   await ensureHash();
   const { email, password } = req.body as { email: string; password: string };
@@ -60,31 +33,18 @@ export async function login(req: Request, res: Response) {
   return res.json({ token });
 }
 
-/* --------------------------
-   Categories
--------------------------- */
-export async function getCategories(req: Request, res: Response) {
+// -----------------
+// Categories
+// -----------------
+export async function getCategories(_req: Request, res: Response) {
   const list = await Category.find().sort({ name: 1 }).lean();
-
-  // ✅ Aliases for different frontends:
-  // - image (db)
-  // - img (legacy UI)
-  // - category (legacy UI expects slug/category field)
-  // - imageUrl (absolute url to render <img src="..."> safely)
-  const out = list.map((c: any) => ({
-    ...c,
-    img: c.image || '',
-    category: c.slug || c.name || '',
-    imageUrl: c.image ? imageAbs(req, c.image) : '',
-  }));
-
-  return res.json(out);
+  return res.json(list);
 }
 
 export async function createCategory(req: Request, res: Response) {
   const { name, image } = req.body as { name: string; image?: string };
   const base = slugify(name);
-  if (!base) return res.status(400).json({ error: 'Kategoriya nomi noto‘g‘ri' });
+  if (!base) return res.status(400).json({ error: 'Kategoriya nomi noto\'g\'ri' });
 
   let slug = base;
   for (let i = 1; i < 50; i++) {
@@ -96,7 +56,7 @@ export async function createCategory(req: Request, res: Response) {
   const doc = await Category.create({
     name: name.trim(),
     slug,
-    image: safeStr(image),
+    image: (image || '').trim(),
   });
 
   return res.status(201).json(doc);
@@ -114,7 +74,7 @@ export async function updateCategory(req: Request, res: Response) {
   if (typeof patch.name === 'string' && patch.name.trim()) {
     const newName = patch.name.trim();
     const base = slugify(newName);
-    if (!base) return res.status(400).json({ error: 'Kategoriya nomi noto‘g‘ri' });
+    if (!base) return res.status(400).json({ error: 'Kategoriya nomi noto\'g\'ri' });
 
     let slug = base;
     for (let i = 1; i < 50; i++) {
@@ -126,7 +86,7 @@ export async function updateCategory(req: Request, res: Response) {
     doc.name = newName;
     doc.slug = slug;
 
-    // Items: sync old slug -> new slug
+    // items: sync old slug -> new slug
     await Item.updateMany(
       { categorySlug: oldSlug },
       { $set: { categorySlug: slug, categoryName: newName } }
@@ -145,78 +105,64 @@ export async function deleteCategory(req: Request, res: Response) {
   if (!doc) return res.status(404).json({ error: 'Kategoriya topilmadi' });
 
   const count = await Item.countDocuments({ categorySlug: doc.slug });
-  if (count > 0) {
-    return res.status(400).json({ error: 'Avval shu kategoriyadagi mahsulotlarni o‘chiring' });
-  }
+  if (count > 0) return res.status(400).json({ error: 'Avval shu kategoriyadagi mahsulotlarni o\'chiring' });
 
   await Category.deleteOne({ _id: id });
   return res.json({ ok: true });
 }
 
-/* --------------------------
-   Items
--------------------------- */
+// -----------------
+// Items
+// -----------------
+async function ensureItemSeqAtLeastMaxId() {
+  const max = await Item.findOne().sort({ id: -1 }).select({ id: 1 }).lean();
+  const maxId = typeof max?.id === 'number' ? max.id : 0;
+  await setSeqAtLeast('item_id', maxId);
+}
+
 export async function getItems(_req: Request, res: Response) {
   const items = await Item.find().sort({ id: -1 }).lean();
-
-  // ✅ Alias for old app schema: "category"
-  const out = items.map((it: any) => ({
-    ...it,
-    category: it.categorySlug || it.categoryName || '',
-  }));
-
-  return res.json(out);
+  return res.json(items);
 }
 
 export async function createItem(req: Request, res: Response) {
-  try {
-    const { title, categorySlug, price, image, isActive } = req.body as any;
+  const { title, categorySlug, price, image, isActive } = req.body as any;
 
-    const cat = await Category.findOne({ slug: String(categorySlug || '').trim() }).lean();
-    if (!cat) return res.status(400).json({ error: 'Kategoriya topilmadi' });
+  const cat = await Category.findOne({ slug: String(categorySlug || '').trim() }).lean();
+  if (!cat) return res.status(400).json({ error: 'Kategoriya topilmadi' });
 
-    // counter sync
-    const max = await Item.findOne().sort({ id: -1 }).select({ id: 1 }).lean();
-    const maxId = Number((max as any)?.id || 0);
-    await ensureSeqAtLeast('item_id', maxId);
+  await ensureItemSeqAtLeastMaxId();
+  const id = await nextSeq('item_id', 1001);
 
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      const id = await nextSeq('item_id');
-      try {
-        const doc = await Item.create({
-          id,
-          title: String(title || '').trim() || `Item #${id}`,
-          categorySlug: (cat as any).slug,
-          categoryName: (cat as any).name,
-          price: Math.max(0, Number(price) || 0),
-          image: String(image || '').trim(),
-          isActive: isActive !== false,
-        });
-        return res.status(201).json(doc);
-      } catch (e: any) {
-        if (e?.code === 11000 && attempt < 3) continue;
-        if (e?.code === 11000) return res.status(409).json({ error: 'Duplicate id, retry' });
-        throw e;
-      }
-    }
+  const doc = await Item.create({
+    id,
+    title: String(title || '').trim() || 'Nomsiz',
+    categorySlug: cat.slug,
+    categoryName: cat.name,
+    price: typeof price === 'number' ? price : Number(price) || 0,
+    image: (image || '').trim(),
+    isActive: isActive !== false,
+  });
 
-    return res.status(500).json({ error: 'Could not create item' });
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || 'Server error' });
-  }
+  return res.status(201).json(doc);
 }
 
-// Removed duplicate createItem function
-
 export async function updateItem(req: Request, res: Response) {
-  const { id } = req.params;
+  const { id } = req.params; // mongo _id
   const patch = req.body as any;
 
   const doc = await Item.findById(id);
   if (!doc) return res.status(404).json({ error: 'Mahsulot topilmadi' });
 
-  if (typeof patch.title === 'string' && patch.title.trim()) doc.title = patch.title.trim();
+  if (typeof patch.title === 'string') {
+    const t = patch.title.trim();
+    if (t) doc.title = t;
+  }
   if (typeof patch.price === 'number' && patch.price >= 0) doc.price = patch.price;
+  if (typeof patch.price === 'string') {
+    const n = Number(patch.price.replace(/[^\d.-]/g, ''));
+    if (Number.isFinite(n) && n >= 0) doc.price = n;
+  }
   if (typeof patch.image === 'string') doc.image = patch.image.trim();
   if (typeof patch.isActive === 'boolean') doc.isActive = patch.isActive;
 
@@ -237,14 +183,12 @@ export async function deleteItem(req: Request, res: Response) {
   return res.json({ ok: true });
 }
 
-/* --------------------------
-   Upload: category/item images
--------------------------- */
+// -----------------
+// Upload (category / item images) -> /public/images/menu/*.webp
+// -----------------
 export async function uploadWebp(req: Request, res: Response) {
-  // Multer may populate req.file (single) or req.files (any/fields).
-  const f =
-    ((req as any).file as Express.Multer.File | undefined) ??
-    ((req as any).files as Express.Multer.File[] | undefined)?.[0];
+  const f = ((req as any).file as Express.Multer.File | undefined)
+    ?? (((req as any).files as Express.Multer.File[] | undefined)?.[0]);
 
   if (!f) return res.status(400).json({ error: 'No file uploaded. Field name must be "image".' });
 
@@ -269,188 +213,110 @@ export async function uploadWebp(req: Request, res: Response) {
 
   await fs.promises.unlink(f.path).catch(() => {});
 
-  const url = `/images/menu/${filename}`;
-  return res.json({
-    success: true,
-    filename,
-    url,
-    absoluteUrl: imageAbs(req, url),
-  });
+  return res.json({ filename, url: `/images/menu/${filename}`, success: true });
 }
 
-// Bulk upload: accepts many files in one request (field: image or file)
-export async function uploadWebpBulk(req: Request, res: Response) {
-  const files = ((req as any).files as Express.Multer.File[] | undefined) ?? []
-  if (!files.length) {
-    return res.status(400).json({ error: 'No files uploaded. Use multipart field name "image".' })
-  }
-
-  const publicDir = req.app.get('publicDir') as string
-  const outDir = path.join(publicDir, 'images', 'menu')
-  fs.mkdirSync(outDir, { recursive: true })
-
-  const results = await Promise.all(
-    files.map(async (f) => {
-      const safeBase = (f.originalname || 'image')
-        .toLowerCase()
-        .replace(/[^a-z0-9._-]/g, '_')
-        .replace(/\.(png|jpg|jpeg|webp|gif)$/i, '')
-        .slice(0, 80)
-
-      const filename = `${safeBase || 'image'}_${Date.now()}_${Math.random()
-        .toString(16)
-        .slice(2)}.webp`
-      const outPath = path.join(outDir, filename)
-
-      await sharp(f.path)
-        .rotate()
-        .resize(1400, 1400, { fit: 'inside', withoutEnlargement: true })
-        .webp({ quality: 85 })
-        .toFile(outPath)
-
-      await fs.promises.unlink(f.path).catch(() => {})
-      return { filename, url: `/images/menu/${filename}` }
-    })
-  )
-
-  return res.json({ ok: true, files: results })
-}
-
-/* --------------------------
-   Media
--------------------------- */
+// -----------------
+// Media list
+// -----------------
 export async function media(req: Request, res: Response) {
   const publicDir = req.app.get('publicDir') as string;
   return res.json(listMediaFiles(publicDir));
 }
 
-/* --------------------------
-   Publish
--------------------------- */
+// -----------------
+// Publish to /public/data
+// -----------------
 export async function publish(req: Request, res: Response) {
   const publicDir = req.app.get('publicDir') as string;
   const r = await publishAll(publicDir);
   return res.json(r);
 }
 
-/* --------------------------
-   ✅ NEW: Import public/data/menu.json -> Mongo
-   - upsert categories by slug
-   - upsert items by id (NOT _id)
--------------------------- */
-export async function importMenuFromPublicJson(req: Request, res: Response) {
-  try {
-    const publicDir = (req.app.get('publicDir') as string) || path.join(process.cwd(), 'public');
-    const filePath = path.join(publicDir, 'data', 'menu.json');
+// -----------------
+// Import from /public/data/menu.json -> Mongo (upsert) + fix counters
+// -----------------
+export async function importMenu(req: Request, res: Response) {
+  const publicDir = req.app.get('publicDir') as string;
+  const menuPath = path.join(publicDir, 'data', 'menu.json');
+  if (!fs.existsSync(menuPath)) return res.status(404).json({ error: 'menu.json topilmadi' });
 
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'menu.json not found', filePath });
-    }
+  const raw = await fs.promises.readFile(menuPath, 'utf8');
+  const data = JSON.parse(raw);
 
-    const raw = fs.readFileSync(filePath, 'utf8');
-    const data = JSON.parse(raw);
+  const cats = Array.isArray(data?.categories) ? data.categories : [];
+  const items = Array.isArray(data?.items) ? data.items : [];
 
-    const categoriesRaw = Array.isArray(data?.categories) ? data.categories : [];
-    const itemsRaw = Array.isArray(data?.items) ? data.items : [];
+  let catMatched = 0;
+  let catModified = 0;
+  let catUpserted = 0;
 
-    if (!itemsRaw.length) return res.status(400).json({ error: 'menu.json items is empty' });
+  for (const c of cats) {
+    const slug = String(c?.slug || '').trim();
+    const name = String(c?.name || c?.categoryName || '').trim();
+    const image = String(c?.image || '').trim();
+    if (!slug || !name) continue;
 
-    // Normalize categories (supports {name,slug,image} and legacy)
-    const catBySlug = new Map<string, { name: string; slug: string; image: string }>();
-    for (const c of categoriesRaw) {
-      const name = safeStr(c?.name ?? c?.category, 80);
-      const slug = safeStr(c?.slug ?? c?.category, 120) || slugify(name);
-      const image = safeStr(c?.image ?? c?.img, 255);
-      if (!name || !slug) continue;
-      catBySlug.set(slug, { name, slug, image });
-    }
-
-    // Normalize items (supports your schema)
-    const normalizedItems = itemsRaw
-      .map((it: any) => {
-        const id = safeNum(it?.id, NaN);
-        const title = safeStr(it?.title, 140);
-        const categorySlug =
-          safeStr(it?.categorySlug, 120) || slugify(safeStr(it?.categoryName ?? it?.category, 80));
-        const categoryName = safeStr(it?.categoryName ?? it?.category, 80) || categorySlug;
-        const price = safeNum(it?.price, 0);
-        const image = safeStr(it?.image, 255);
-        const isActive = typeof it?.isActive === 'boolean' ? it.isActive : true;
-
-        if (!Number.isFinite(id) || !title || !categorySlug) return null;
-
-        // Ensure category exists
-        if (!catBySlug.has(categorySlug)) {
-          catBySlug.set(categorySlug, { name: categoryName, slug: categorySlug, image: '' });
-        }
-
-        return { id, title, categorySlug, categoryName, price, image, isActive };
-      })
-      .filter(Boolean) as Array<{
-      id: number;
-      title: string;
-      categorySlug: string;
-      categoryName: string;
-      price: number;
-      image: string;
-      isActive: boolean;
-    }>;
-
-    if (!normalizedItems.length) {
-      return res.status(400).json({ error: 'No valid items after normalization' });
-    }
-
-    const categoriesToUpsert = Array.from(catBySlug.values());
-
-    const catOps = categoriesToUpsert.map(c => ({
-      updateOne: {
-        filter: { slug: c.slug },
-        update: { $set: { name: c.name, slug: c.slug, image: c.image } },
-        upsert: true,
-      },
-    }));
-
-    const itemOps = normalizedItems.map(it => ({
-      updateOne: {
-        filter: { id: it.id },
-        update: { $set: it },
-        upsert: true,
-      },
-    }));
-
-    const [catResult, itemResult] = await Promise.all([
-      Category.bulkWrite(catOps, { ordered: false }),
-      Item.bulkWrite(itemOps, { ordered: false }),
-    ]);
-
-    // After bulk import, make sure the auto-increment counter is not behind.
-    // Otherwise next createItem() may generate an existing id and crash with E11000.
-    const maxImportedId = normalizedItems.reduce((m, x) => (x.id > m ? x.id : m), 0);
-    if (Number.isFinite(maxImportedId) && maxImportedId > 0) {
-      await ensureSeqAtLeast('item_id', maxImportedId);
-    }
-
-    return res.json({
-      ok: true,
-      source: filePath,
-      imported: {
-        categories: categoriesToUpsert.length,
-        items: normalizedItems.length,
-      },
-      mongo: {
-        categories: {
-          upserted: (catResult as any).upsertedCount ?? 0,
-          modified: (catResult as any).modifiedCount ?? 0,
-          matched: (catResult as any).matchedCount ?? 0,
-        },
-        items: {
-          upserted: (itemResult as any).upsertedCount ?? 0,
-          modified: (itemResult as any).modifiedCount ?? 0,
-          matched: (itemResult as any).matchedCount ?? 0,
-        },
-      },
-    });
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || 'import failed' });
+    const r = await Category.updateOne(
+      { slug },
+      { $set: { name, slug, image } },
+      { upsert: true }
+    );
+    catMatched += (r as any).matchedCount ?? 0;
+    catModified += (r as any).modifiedCount ?? 0;
+    catUpserted += (r as any).upsertedCount ?? 0;
   }
+
+  let itemMatched = 0;
+  let itemModified = 0;
+  let itemUpserted = 0;
+
+  for (const it of items) {
+    const id = typeof it?.id === 'number' ? it.id : Number(it?.id);
+    const title = String(it?.title || '').trim();
+    const categorySlug = String(it?.categorySlug || it?.category || '').trim();
+    const categoryName = String(it?.categoryName || '').trim();
+    const price = typeof it?.price === 'number' ? it.price : Number(it?.price);
+    const image = String(it?.image || '').trim();
+    const isActive = it?.isActive !== false;
+    if (!Number.isFinite(id) || !title || !categorySlug || !Number.isFinite(price) || !image) continue;
+
+    // If categoryName missing, fetch from categories
+    let catName = categoryName;
+    if (!catName) {
+      const c = await Category.findOne({ slug: categorySlug }).lean();
+      catName = c?.name || categorySlug;
+    }
+
+    const r = await Item.updateOne(
+      { id },
+      {
+        $set: {
+          id,
+          title,
+          categorySlug,
+          categoryName: catName,
+          price,
+          image,
+          isActive,
+        },
+      },
+      { upsert: true }
+    );
+    itemMatched += (r as any).matchedCount ?? 0;
+    itemModified += (r as any).modifiedCount ?? 0;
+    itemUpserted += (r as any).upsertedCount ?? 0;
+  }
+
+  // fix item counter to max id
+  await ensureItemSeqAtLeastMaxId();
+
+  return res.json({
+    ok: true,
+    imported: { categories: cats.length, items: items.length },
+    mongo: {
+      categories: { matched: catMatched, modified: catModified, upserted: catUpserted },
+      items: { matched: itemMatched, modified: itemModified, upserted: itemUpserted },
+    },
+  });
 }

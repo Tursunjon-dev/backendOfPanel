@@ -1,13 +1,14 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
 
-function must(name: string, fallback?: string) {
-  const v = process.env[name] ?? fallback;
-  if (!v) throw new Error(`ENV missing: ${name}`);
+dotenv.config();
+
+function must(name: string, v: string | undefined) {
+  if (!v) throw new Error(`Missing env: ${name}`);
   return v;
 }
 
-function csv(name: string, fallback: string) {
-  return (process.env[name] ?? fallback)
+function splitCsv(v: string | undefined) {
+  return (v ?? '')
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
@@ -17,14 +18,14 @@ export const ENV = {
   NODE_ENV: process.env.NODE_ENV || 'development',
   PORT: Number(process.env.PORT || 4000),
 
-  MONGO_URI: must('MONGO_URI'),
+  MONGO_URI: must('MONGO_URI', process.env.MONGO_URI),
+  PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || '',
 
-  ADMIN_EMAIL: must('ADMIN_EMAIL', 'admin@local.com'),
-  ADMIN_PASSWORD: must('ADMIN_PASSWORD', 'admin12345'),
-  JWT_SECRET: must('JWT_SECRET', 'change_me_please_use_32_chars_minimum'),
+  ADMIN_EMAIL: must('ADMIN_EMAIL', process.env.ADMIN_EMAIL),
+  ADMIN_PASSWORD: must('ADMIN_PASSWORD', process.env.ADMIN_PASSWORD),
+  JWT_SECRET: must('JWT_SECRET', process.env.JWT_SECRET),
 
-  // Comma-separated list is supported.
-  ADMIN_CORS_ORIGINS: csv('ADMIN_CORS_ORIGIN', 'http://localhost:5173'),
-
-  MAX_JSON_MB: Number(process.env.MAX_JSON_MB || 10),
-};
+  ADMIN_CORS_ORIGINS: splitCsv(process.env.ADMIN_CORS_ORIGINS),
+  MAX_JSON_MB: Number(process.env.MAX_JSON_MB || 5),
+  CACHE_TTL_MS: Number(process.env.CACHE_TTL_MS || 30000),
+} as const;

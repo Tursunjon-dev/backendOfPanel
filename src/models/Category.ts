@@ -1,10 +1,10 @@
-import { Schema, model } from 'mongoose';
+﻿import { Schema, model } from 'mongoose';
 
 const CategorySchema = new Schema(
   {
-    name: { type: String, required: true, trim: true, maxlength: 80 },
+    name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, index: true },
-    image: { type: String, default: '' }, // filename (.webp) or empty
+    image: { type: String, default: '' }, // optional
   },
   { timestamps: true }
 );

@@ -7,7 +7,7 @@ export function validate(schema: z.ZodSchema) {
     if (!r.success) {
       return res.status(400).json({
         error: 'Validation failed',
-        details: r.error.issues.map(e => ({
+        details: r.error.errors.map((e: { path: any[]; message: any }) => ({
           field: e.path.join('.'),
           message: e.message,
         })),
@@ -37,7 +37,7 @@ export const Z = {
   itemCreate: z.object({
     title: z.string().min(1).max(140),
     categorySlug: z.string().min(1),
-    price: z.number().nonnegative(),
+    price: z.number().positive(),
     image: z.string().optional().default(''),
     isActive: z.boolean().optional().default(true),
   }),
@@ -45,7 +45,7 @@ export const Z = {
   itemUpdate: z.object({
     title: z.string().min(1).max(140).optional(),
     categorySlug: z.string().min(1).optional(),
-    price: z.number().nonnegative().optional(),
+    price: z.number().positive().optional(),
     image: z.string().optional(),
     isActive: z.boolean().optional(),
   }),

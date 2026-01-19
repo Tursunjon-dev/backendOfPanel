@@ -9,23 +9,17 @@ export function makeUploadTmp(publicDir: string) {
   const storage = multer.diskStorage({
     destination: (_req, _file, cb) => cb(null, dir),
     filename: (_req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-      const base = path
-        .basename(file.originalname, ext)
-        .replace(/[^A-Za-z0-9_-]+/g, '_')
+      const ext = path.extname(file.originalname || '').toLowerCase() || '.bin';
+      const base = (path.basename(file.originalname || 'upload', ext) || 'upload')
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, '_')
         .slice(0, 60);
-      cb(null, `${base || 'file'}_${Date.now()}${ext}`);
+      cb(null, `${base}_${Date.now()}${ext}`);
     },
   });
 
-  const fileFilter: multer.Options['fileFilter'] = (_req, file, cb) => {
-    const ok = ['image/jpeg', 'image/png', 'image/webp', 'image/jpg'].includes(file.mimetype);
-    if (ok) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only JPG/PNG/WebP allowed'));
-    }
-  };
-
-  return multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } });
+  return multer({
+    storage,
+    limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+  });
 }

@@ -1,12 +1,9 @@
-export function slugify(input: string): string {
-  const s = String(input || '')
+export function slugify(input: string) {
+  return input
     .trim()
     .toLowerCase()
-    // latinize basic uz/ru/??: keep a-z0-9, replace others with '-'
-    .replace(/['"`’]+/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/[^a-z0-9-]/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '');
-  return s;
+    .replace(/['"]/g, '')
+    .replace(/[^a-z0-9\u0400-\u04FF]+/g, '-') // latin + cyrillic
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
 }

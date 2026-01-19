@@ -1,4 +1,5 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
+
 import {
   createCategory,
   createItem,
@@ -6,52 +7,44 @@ import {
   deleteItem,
   getCategories,
   getItems,
-  importMenuFromPublicJson,
+  importMenu,
   login,
   media,
   publish,
   updateCategory,
   updateItem,
   uploadWebp,
-  uploadWebpBulk,
 } from '../controllers/admin.controller';
 import { requireAdmin } from '../middleware/auth';
 import { makeUploadTmp } from '../middleware/upload';
 import { validate, Z } from '../middleware/validate';
 
-// Express 4 does not automatically forward async errors.
-// Wrap controllers to avoid unhandled promise rejections (which can restart the server on Render).
-const a = (fn: any) => (req: any, res: any, next: any) =>
-  Promise.resolve(fn(req, res, next)).catch(next);
-
 export function adminRouter(publicDir: string) {
   const r = Router();
   const upload = makeUploadTmp(publicDir);
 
-  r.post('/auth/login', validate(Z.login), a(login));
+  r.post('/auth/login', validate(Z.login), login);
 
+  // Protected routes
   r.use(requireAdmin);
 
-  r.get('/categories', a(getCategories));
-  r.post('/categories', validate(Z.categoryCreate), a(createCategory));
-  r.put('/categories/:id', validate(Z.categoryUpdate), a(updateCategory));
-  r.delete('/categories/:id', a(deleteCategory));
+  r.get('/categories', getCategories);
+  r.post('/categories', validate(Z.categoryCreate), createCategory);
+  r.put('/categories/:id', validate(Z.categoryUpdate), updateCategory);
+  r.delete('/categories/:id', deleteCategory);
 
-  r.get('/items', a(getItems));
-  r.post('/items', validate(Z.itemCreate), a(createItem));
-  r.put('/items/:id', validate(Z.itemUpdate), a(updateItem));
-  r.delete('/items/:id', a(deleteItem));
+  r.get('/items', getItems);
+  r.post('/items', validate(Z.itemCreate), createItem);
+  r.put('/items/:id', validate(Z.itemUpdate), updateItem);
+  r.delete('/items/:id', deleteItem);
 
-  // Accept both field names: "image" (frontend) and legacy "file"
-  r.post('/upload', upload.any(), a(uploadWebp));
-  r.post('/upload/bulk', upload.any(), a(uploadWebpBulk));
-  r.get('/media', a(media));
-  r.post('/publish', a(publish));
+  // Upload: accept both "image" and legacy "file" (upload.any will pick first)
+  r.post('/upload', upload.any(), uploadWebp);
 
-  // ✅ NEW: JSON -> Mongo import
-  // Reads: public/data/menu.json
-  // Writes: Category + Item collections (upsert)
-  r.post('/import/menu', a(importMenuFromPublicJson));
+  // Admin utilities
+  r.get('/media', media);
+  r.post('/publish', publish);
+  r.post('/import/menu', importMenu);
 
   return r;
 }
