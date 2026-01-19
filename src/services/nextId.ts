@@ -6,5 +6,13 @@ export async function nextSeq(key: string): Promise<number> {
     { $inc: { seq: 1 } },
     { new: true, upsert: true }
   ).lean();
-  return doc?.seq ?? 1;
+  return doc!.seq;
+}
+
+export async function ensureSeqAtLeast(key: string, minValue: number) {
+  await Counter.updateOne(
+    { key, seq: { $lt: minValue } },
+    { $set: { seq: minValue } },
+    { upsert: true }
+  );
 }

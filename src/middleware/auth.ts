@@ -3,9 +3,13 @@ import jwt from 'jsonwebtoken';
 import { ENV } from '../config/env';
 
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
-  const h = String(req.headers.authorization || '');
-  const token = h.startsWith('Bearer ') ? h.slice(7).trim() : '';
-  if (!token) return res.status(401).json({ error: 'Missing token' });
+  const h = String(req.headers.authorization || '').trim();
+  if (!h) return res.status(401).json({ error: 'Missing token' });
+
+  // Accept:
+  // 1) "Bearer xxx"
+  // 2) "xxx" (bare token)
+  const token = h.toLowerCase().startsWith('bearer ') ? h.slice(7).trim() : h;
 
   try {
     const payload = jwt.verify(token, ENV.JWT_SECRET) as any;

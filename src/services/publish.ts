@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 import Category from '../models/Category';
 import Item from '../models/Item';
+import { nextSeq } from './nextId';
 
 function sha256(obj: unknown) {
   const s = JSON.stringify(obj);
@@ -48,8 +49,12 @@ export async function publishAll(publicDir: string) {
 
   fs.writeFileSync(path.join(dataDir, 'menu.json'), JSON.stringify(menuJson, null, 2), 'utf8');
 
+  // A simple monotonically increasing version helps clients detect updates
+  // even if HTTP caches serve stale responses.
+  const versionNumber = await nextSeq('menu_version');
   const version = {
-    updatedAt: menuJson.meta.exportedAt,
+    version: versionNumber,
+    exportedAt: menuJson.meta.exportedAt,
     checksum,
     totalItems: payload.meta.totalItems,
     totalCategories: payload.meta.totalCategories,

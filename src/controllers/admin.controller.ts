@@ -4,12 +4,12 @@ import fs from 'fs';
 import jwt from 'jsonwebtoken';
 import path from 'path';
 import sharp from 'sharp';
-
 import { ENV } from '../config/env';
 import Category from '../models/Category';
 import Item from '../models/Item';
 import { listMediaFiles } from '../services/media';
-import { nextSeq } from '../services/nextId';
+import { ensureSeqAtLeast, nextSeq } from '../services/nextId';
+import type { Multer } from 'multer';
 import { publishAll } from '../services/publish';
 import { slugify } from '../services/slug';
 
@@ -169,24 +169,44 @@ export async function getItems(_req: Request, res: Response) {
 }
 
 export async function createItem(req: Request, res: Response) {
-  const { title, categorySlug, price, image, isActive } = req.body as any;
+  try {
+    const { title, categorySlug, price, image, isActive } = req.body as any;
 
-  const cat = await Category.findOne({ slug: categorySlug }).lean();
-  if (!cat) return res.status(400).json({ error: 'Kategoriya topilmadi' });
+    const cat = await Category.findOne({ slug: String(categorySlug || '').trim() }).lean();
+    if (!cat) return res.status(400).json({ error: 'Kategoriya topilmadi' });
 
-  const id = await nextSeq('item_id');
-  const doc = await Item.create({
-    id,
-    title: String(title).trim(),
-    categorySlug: cat.slug,
-    categoryName: cat.name,
-    price: safeNum(price, 0),
-    image: safeStr(image),
-    isActive: isActive !== false,
-  });
+    // counter sync
+    const max = await Item.findOne().sort({ id: -1 }).select({ id: 1 }).lean();
+    const maxId = Number((max as any)?.id || 0);
+    await ensureSeqAtLeast('item_id', maxId);
 
-  return res.status(201).json(doc);
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const id = await nextSeq('item_id');
+      try {
+        const doc = await Item.create({
+          id,
+          title: String(title || '').trim() || `Item #${id}`,
+          categorySlug: (cat as any).slug,
+          categoryName: (cat as any).name,
+          price: Math.max(0, Number(price) || 0),
+          image: String(image || '').trim(),
+          isActive: isActive !== false,
+        });
+        return res.status(201).json(doc);
+      } catch (e: any) {
+        if (e?.code === 11000 && attempt < 3) continue;
+        if (e?.code === 11000) return res.status(409).json({ error: 'Duplicate id, retry' });
+        throw e;
+      }
+    }
+
+    return res.status(500).json({ error: 'Could not create item' });
+  } catch (e: any) {
+    return res.status(500).json({ error: e?.message || 'Server error' });
+  }
 }
+
+// Removed duplicate createItem function
 
 export async function updateItem(req: Request, res: Response) {
   const { id } = req.params;
@@ -256,6 +276,44 @@ export async function uploadWebp(req: Request, res: Response) {
     url,
     absoluteUrl: imageAbs(req, url),
   });
+}
+
+// Bulk upload: accepts many files in one request (field: image or file)
+export async function uploadWebpBulk(req: Request, res: Response) {
+  const files = ((req as any).files as Express.Multer.File[] | undefined) ?? []
+  if (!files.length) {
+    return res.status(400).json({ error: 'No files uploaded. Use multipart field name "image".' })
+  }
+
+  const publicDir = req.app.get('publicDir') as string
+  const outDir = path.join(publicDir, 'images', 'menu')
+  fs.mkdirSync(outDir, { recursive: true })
+
+  const results = await Promise.all(
+    files.map(async (f) => {
+      const safeBase = (f.originalname || 'image')
+        .toLowerCase()
+        .replace(/[^a-z0-9._-]/g, '_')
+        .replace(/\.(png|jpg|jpeg|webp|gif)$/i, '')
+        .slice(0, 80)
+
+      const filename = `${safeBase || 'image'}_${Date.now()}_${Math.random()
+        .toString(16)
+        .slice(2)}.webp`
+      const outPath = path.join(outDir, filename)
+
+      await sharp(f.path)
+        .rotate()
+        .resize(1400, 1400, { fit: 'inside', withoutEnlargement: true })
+        .webp({ quality: 85 })
+        .toFile(outPath)
+
+      await fs.promises.unlink(f.path).catch(() => {})
+      return { filename, url: `/images/menu/${filename}` }
+    })
+  )
+
+  return res.json({ ok: true, files: results })
 }
 
 /* --------------------------
@@ -364,6 +422,13 @@ export async function importMenuFromPublicJson(req: Request, res: Response) {
       Category.bulkWrite(catOps, { ordered: false }),
       Item.bulkWrite(itemOps, { ordered: false }),
     ]);
+
+    // After bulk import, make sure the auto-increment counter is not behind.
+    // Otherwise next createItem() may generate an existing id and crash with E11000.
+    const maxImportedId = normalizedItems.reduce((m, x) => (x.id > m ? x.id : m), 0);
+    if (Number.isFinite(maxImportedId) && maxImportedId > 0) {
+      await ensureSeqAtLeast('item_id', maxImportedId);
+    }
 
     return res.json({
       ok: true,

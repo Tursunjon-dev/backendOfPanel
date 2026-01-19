@@ -1,81 +1,533 @@
 {
   "meta": {
-    "exportedAt": "2026-01-18T00:00:00.000Z",
-    "totalItems": 65,
-    "totalCategories": 3,
+    "exportedAt": "2026-01-19T15:03:49.645Z",
+    "totalItems": 49,
+    "totalCategories": 5,
     "schemaVersion": "1.0",
-    "checksum": ""
+    "checksum": "d78879e9777c48b41ebb26b5c745a42d8ace54ba8fb067913eead6f907414134"
   },
   "categories": [
-    { "name": "Ichimlik", "slug": "ichimlik", "image": "cola.webp" },
-    { "name": "Ovqat", "slug": "ovqat", "image": "default_shashlik.webp" },
-    { "name": "Salat", "slug": "salat", "image": "salat_v1.webp" }
+    {
+      "_id": "696e43d44aa10f1cf587a432",
+      "name": "ALKAGOL",
+      "slug": "alkagol",
+      "image": ""
+    },
+    {
+      "_id": "696e1b26abef6223268d7d1d",
+      "name": "CHOY",
+      "slug": "choy",
+      "image": ""
+    },
+    {
+      "_id": "696cf21bc8301a2c9402bbdd",
+      "name": "Ichimlik",
+      "slug": "ichimlik",
+      "image": "cola.webp"
+    },
+    {
+      "_id": "696cf222c8301a2c9402bbe1",
+      "name": "Ovqat",
+      "slug": "ovqat",
+      "image": "default_shashlik.webp"
+    },
+    {
+      "_id": "696cf227c8301a2c9402bbe5",
+      "name": "Salat",
+      "slug": "salat",
+      "image": "salat_v1.webp"
+    }
   ],
   "items": [
-    { "id": 1, "title": "Adrenalin", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "adrenalin.webp", "isActive": true },
-    { "id": 2, "title": "Anor Suvi", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "anorsuvi.webp", "isActive": true },
-    { "id": 3, "title": "Balitka", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "balitka.webp", "isActive": true },
-    { "id": 4, "title": "Borjomi", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "borjomi.webp", "isActive": true },
-    { "id": 5, "title": "Chernagalovka", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "chernagalovka.webp", "isActive": true },
-    { "id": 6, "title": "Chortoq", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "chortoq.webp", "isActive": true },
-    { "id": 7, "title": "Cola", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "cola.webp", "isActive": true },
-    { "id": 8, "title": "Default Shashlik", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "default_shashlik.webp", "isActive": true },
-    { "id": 9, "title": "Dolina Abricot", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_abricot.webp", "isActive": true },
-    { "id": 10, "title": "Dolina Ananas", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_ananas.webp", "isActive": true },
-    { "id": 11, "title": "Dolina Limon", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_limon.webp", "isActive": true },
-    { "id": 12, "title": "Dolina Multi", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_multi.webp", "isActive": true },
-    { "id": 13, "title": "Dolina Olma", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_olma.webp", "isActive": true },
-    { "id": 14, "title": "Dolina Shaftoli", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_shaftoli.webp", "isActive": true },
-    { "id": 15, "title": "Dolina Smaradina", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_smaradina.webp", "isActive": true },
-    { "id": 16, "title": "Dolina Yagod", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "dolina_yagod.webp", "isActive": true },
-    { "id": 17, "title": "Fanta", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "fanta.webp", "isActive": true },
-    { "id": 18, "title": "Flash", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "flash.webp", "isActive": true },
-    { "id": 19, "title": "Gorilla", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "gorilla.webp", "isActive": true },
-    { "id": 20, "title": "Lemonade", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "lemonade.webp", "isActive": true },
-    { "id": 21, "title": "Limon Choy", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "limon_choy.webp", "isActive": true },
-    { "id": 22, "title": "Limon Choy V2", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "limon_choy_v2.webp", "isActive": true },
-    { "id": 23, "title": "Mix Choy", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "mix_choy.webp", "isActive": true },
-    { "id": 24, "title": "Mojito Qulubnay", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "mojito_qulubnay.webp", "isActive": true },
-    { "id": 25, "title": "Moxito Laym", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "moxito_laym.webp", "isActive": true },
-    { "id": 26, "title": "Moxito Qizil", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "moxito_qizil.webp", "isActive": true },
-    { "id": 27, "title": "Moxito Qulubnay", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "moxito_qulubnay.webp", "isActive": true },
-    { "id": 28, "title": "Nataxtare", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "nataxtare.webp", "isActive": true },
-    { "id": 29, "title": "Otli Choy", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "otli_choy.webp", "isActive": true },
-    { "id": 30, "title": "Otli Choy2", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "otli_choy2.webp", "isActive": true },
-    { "id": 31, "title": "Peper Shshlik", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "peper_shshlik.webp", "isActive": true },
-    { "id": 32, "title": "Qovurga", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "qovurga.webp", "isActive": true },
-    { "id": 33, "title": "Rapery Choy", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "rapery_choy.webp", "isActive": true },
-    { "id": 34, "title": "Rapery Choy V2", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "rapery_choy_v2.webp", "isActive": true },
-    { "id": 35, "title": "Redbull", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "redbull.webp", "isActive": true },
-    { "id": 36, "title": "Salat V1", "categorySlug": "salat", "categoryName": "Salat", "price": 100, "image": "salat_v1.webp", "isActive": true },
-    { "id": 37, "title": "Salat V2", "categorySlug": "salat", "categoryName": "Salat", "price": 100, "image": "salat_v2.webp", "isActive": true },
-    { "id": 38, "title": "Salat V3", "categorySlug": "salat", "categoryName": "Salat", "price": 100, "image": "salat_v3.webp", "isActive": true },
-    { "id": 39, "title": "Salat V4", "categorySlug": "salat", "categoryName": "Salat", "price": 100, "image": "salat_v4.webp", "isActive": true },
-    { "id": 40, "title": "Salat V5", "categorySlug": "salat", "categoryName": "Salat", "price": 100, "image": "salat_v5.webp", "isActive": true },
-    { "id": 41, "title": "Sarbast", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "sarbast.webp", "isActive": true },
-    { "id": 42, "title": "Set", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "set.webp", "isActive": true },
-    { "id": 43, "title": "Shashlik 1v", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shashlik_1v.webp", "isActive": true },
-    { "id": 44, "title": "Shashlik 2v", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shashlik_2v.webp", "isActive": true },
-    { "id": 45, "title": "Shashlik Spl Taken", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shashlik_spl_taken.webp", "isActive": true },
-    { "id": 46, "title": "Shashlik Taken", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shashlik_taken.webp", "isActive": true },
-    { "id": 47, "title": "Shashlik Taken2", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shashlik_taken2.webp", "isActive": true },
-    { "id": 48, "title": "Shatot", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "shatot.webp", "isActive": true },
-    { "id": 49, "title": "Shortset", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "shortset.webp", "isActive": true },
-    { "id": 50, "title": "Shymkent", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "shymkent.webp", "isActive": true },
-    { "id": 51, "title": "Sosiska", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "sosiska.webp", "isActive": true },
-    { "id": 52, "title": "Sprite", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "sprite.webp", "isActive": true },
-    { "id": 53, "title": "Stayk V2", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "stayk_v2.webp", "isActive": true },
-    { "id": 54, "title": "Stayk V3", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "stayk_v3.webp", "isActive": true },
-    { "id": 55, "title": "Steyk", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "steyk.webp", "isActive": true },
-    { "id": 56, "title": "Svejiyasarti", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "svejiyasarti.webp", "isActive": true },
-    { "id": 57, "title": "Tuborg", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "tuborg.webp", "isActive": true },
-    { "id": 58, "title": "Viko", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko.webp", "isActive": true },
-    { "id": 59, "title": "Viko Apelsin", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko_apelsin.webp", "isActive": true },
-    { "id": 60, "title": "Viko Ekzotik", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko_ekzotik.webp", "isActive": true },
-    { "id": 61, "title": "Viko Olcha", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko_olcha.webp", "isActive": true },
-    { "id": 62, "title": "Viko Olma", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko_olma.webp", "isActive": true },
-    { "id": 63, "title": "Viko Reazvor", "categorySlug": "ichimlik", "categoryName": "Ichimlik", "price": 100, "image": "viko_reazvor.webp", "isActive": true },
-    { "id": 64, "title": "Xrustyashka", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "xrustyashka.webp", "isActive": true },
-    { "id": 65, "title": "Yaponskiy", "categorySlug": "ovqat", "categoryName": "Ovqat", "price": 100, "image": "yaponskiy.webp", "isActive": true }
+    {
+      "_id": "696d0553cd7c77331db83c8a",
+      "id": 1,
+      "title": "Adrenalin",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "adrenalin.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c8b",
+      "id": 2,
+      "title": "Anor Suvi",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 8000,
+      "image": "anorsuvi.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c96",
+      "id": 3,
+      "title": "Balitka",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "balitka.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696cf8e6998b082d6d7cd322",
+      "id": 4,
+      "title": "Borjomi",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 16000,
+      "image": "borjomi.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cab",
+      "id": 5,
+      "title": "Chernagalovka",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "chernagalovka.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb6",
+      "id": 6,
+      "title": "Chortoq",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 15000,
+      "image": "chortoq.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cc1",
+      "id": 7,
+      "title": "Cola",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "cola.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cc7",
+      "id": 8,
+      "title": "Default Shashlik",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "default_shashlik.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c8d",
+      "id": 12,
+      "title": "COK",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 16000,
+      "image": "dolina_multi.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696e1fd5abef6223268d7d6c",
+      "id": 16,
+      "title": "SEZIR",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 40000,
+      "image": "photo_2026-01-19_16-19-14_1768834321010.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c92",
+      "id": 17,
+      "title": "Fanta",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "fanta.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c93",
+      "id": 18,
+      "title": "Flash",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 12000,
+      "image": "flash.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c94",
+      "id": 19,
+      "title": "Gorilla",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 14000,
+      "image": "gorilla.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696e415ea4d5590183c7e8fd",
+      "id": 20,
+      "title": "GIRETSKI",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 35000,
+      "image": "photo_2026-01-19_17-16-39_1768833846526.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c97",
+      "id": 21,
+      "title": "Limon Choy",
+      "categorySlug": "choy",
+      "categoryName": "CHOY",
+      "price": 12000,
+      "image": "limon_choy.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696e43034aa10f1cf587a418",
+      "id": 22,
+      "title": "SMAK",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 30000,
+      "image": "photo_2026-01-19_19-40-07_1768833764769.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696e473a4aa10f1cf587a47d",
+      "id": 23,
+      "title": "CHIROQCHI",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 30000,
+      "image": "photo_2026-01-19_19-59-45_1768834871971.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c9c",
+      "id": 26,
+      "title": "Moxito",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 14000,
+      "image": "moxito_qizil.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c9d",
+      "id": 27,
+      "title": "MAXITO GRAFIN",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 45000,
+      "image": "moxito_qulubnay.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c9e",
+      "id": 28,
+      "title": "Nataxtare",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "nataxtare.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83c9f",
+      "id": 29,
+      "title": "KIYIKLI CHUY",
+      "categorySlug": "choy",
+      "categoryName": "CHOY",
+      "price": 4000,
+      "image": "otli_choy.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca0",
+      "id": 30,
+      "title": "KO'K CHOY",
+      "categorySlug": "choy",
+      "categoryName": "CHOY",
+      "price": 3000,
+      "image": "otli_choy2.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca1",
+      "id": 31,
+      "title": "Peper Shshlik",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "peper_shshlik.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca2",
+      "id": 32,
+      "title": "Qovurga",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "qovurga.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca5",
+      "id": 35,
+      "title": "Redbull",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 30000,
+      "image": "redbull.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca6",
+      "id": 36,
+      "title": "MUJSKOY KAPRIS",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 40000,
+      "image": "salat_v1.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83ca7",
+      "id": 37,
+      "title": "ACHIQ CHUCHUK",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 25000,
+      "image": "photo_2026-01-19_20-02-05_1768834949211.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696e0405cd7c77331db83d7a",
+      "id": 39,
+      "title": "RUKOLA",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 40000,
+      "image": "salat_v4.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83caa",
+      "id": 40,
+      "title": "SALYONI ASRTI",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 20000,
+      "image": "salat_v5.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cac",
+      "id": 41,
+      "title": "Sarbast",
+      "categorySlug": "alkagol",
+      "categoryName": "ALKAGOL",
+      "price": 12000,
+      "image": "sarbast.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cad",
+      "id": 42,
+      "title": "Set",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "set.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cae",
+      "id": 43,
+      "title": "Shashlik 1v",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shashlik_1v.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83caf",
+      "id": 44,
+      "title": "Shashlik 2v",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shashlik_2v.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb0",
+      "id": 45,
+      "title": "Shashlik Spl Taken",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shashlik_spl_taken.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb1",
+      "id": 46,
+      "title": "Shashlik Taken",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shashlik_taken.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb2",
+      "id": 47,
+      "title": "Shashlik Taken2",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shashlik_taken2.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb3",
+      "id": 48,
+      "title": "Shatot",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 8000,
+      "image": "shatot.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb4",
+      "id": 49,
+      "title": "Shortset",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "shortset.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb5",
+      "id": 50,
+      "title": "CHIMKENT",
+      "categorySlug": "alkagol",
+      "categoryName": "ALKAGOL",
+      "price": 25000,
+      "image": "shymkent.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb7",
+      "id": 51,
+      "title": "Sosiska",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "sosiska.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb8",
+      "id": 52,
+      "title": "Sprite",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 17000,
+      "image": "sprite.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cb9",
+      "id": 53,
+      "title": "Stayk V2",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "stayk_v2.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cba",
+      "id": 54,
+      "title": "Stayk V3",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "stayk_v3.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cbb",
+      "id": 55,
+      "title": "Steyk",
+      "categorySlug": "ovqat",
+      "categoryName": "Ovqat",
+      "price": 100,
+      "image": "steyk.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cbc",
+      "id": 56,
+      "title": "SUVEJI ASARTI",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 30000,
+      "image": "svejiyasarti.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cbd",
+      "id": 57,
+      "title": "Tuborg",
+      "categorySlug": "alkagol",
+      "categoryName": "ALKAGOL",
+      "price": 15000,
+      "image": "tuborg.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cbe",
+      "id": 58,
+      "title": "Viko COK",
+      "categorySlug": "ichimlik",
+      "categoryName": "Ichimlik",
+      "price": 20000,
+      "image": "viko.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cc5",
+      "id": 64,
+      "title": "XURUTYASHI BAKLAJAN",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 35000,
+      "image": "xrustyashka.webp",
+      "isActive": true
+    },
+    {
+      "_id": "696d0553cd7c77331db83cc6",
+      "id": 65,
+      "title": "Yaponskiy",
+      "categorySlug": "salat",
+      "categoryName": "Salat",
+      "price": 50000,
+      "image": "photo_2026-01-19_19-52-42_1768834410848.webp",
+      "isActive": true
+    }
   ]
 }
