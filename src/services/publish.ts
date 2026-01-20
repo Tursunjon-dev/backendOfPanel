@@ -22,7 +22,7 @@ export async function publishAll(publicDir: string) {
     Item.find().sort({ id: 1 }).lean(),
   ]);
 
-  const payload = {
+  const payload: any = {
     meta: {
       exportedAt: new Date().toISOString(),
       totalItems: items.length,
@@ -30,12 +30,12 @@ export async function publishAll(publicDir: string) {
       schemaVersion: '1.0',
       checksum: '',
     },
-    categories: cats.map(c => ({
+    categories: cats.map((c: any) => ({
       name: c.name,
       slug: c.slug,
       image: c.image || '',
     })),
-    items: items.map(i => ({
+    items: items.map((i: any) => ({
       id: i.id,
       title: i.title,
       categorySlug: i.categorySlug,
@@ -46,13 +46,12 @@ export async function publishAll(publicDir: string) {
     })),
   };
 
-  const jsonNoChecksum = JSON.stringify({ ...payload, meta: { ...payload.meta, checksum: '' } });
-  const checksum = sha1(jsonNoChecksum);
+  // checksum is computed with checksum field empty
+  const checksum = sha1(JSON.stringify({ ...payload, meta: { ...payload.meta, checksum: '' } }));
   payload.meta.checksum = checksum;
 
-  // Monotonic menu version
-  // Also ensure it never goes backwards if user imported a menu with higher version.
-  const version = await nextSeq('menu_version');
+  // monotonic version
+  const version = await nextSeq('menu_version', 1);
 
   fs.writeFileSync(path.join(dataDir, 'menu.json'), JSON.stringify(payload, null, 2), 'utf8');
   fs.writeFileSync(
@@ -65,7 +64,7 @@ export async function publishAll(publicDir: string) {
 }
 
 /**
- * If you import menu.json from disk (or elsewhere), call this to bump the version.
+ * Optional helper if you import a menu from disk and want to bump version.
  */
 export async function bumpMenuVersion(minVersion?: number) {
   if (typeof minVersion === 'number' && Number.isFinite(minVersion)) {
