@@ -7,8 +7,8 @@ export function validate(schema: z.ZodSchema) {
     if (!r.success) {
       return res.status(400).json({
         error: 'Validation failed',
-        details: r.error.issues.map(e => ({
-          field: (e.path as (string | number)[]).join('.'),
+        details: r.error.errors.map((e: { path: any[]; message: any }) => ({
+          field: e.path.join('.'),
           message: e.message,
         })),
       });

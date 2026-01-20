@@ -1,40 +1,53 @@
-// src/services/seq.ts
 import { Counter } from '../models/Counter';
 
 /**
- * Ensures counter is at least `min`.
- * (Mongo conflict bo‘lmasligi uchun $max ishlatamiz)
+ * Atomic, monotonic sequence by key.
+ * IMPORTANT: Uses an aggregation-pipeline update to avoid
+ * "ConflictingUpdateOperators" when combining $inc + $setOnInsert on the same field.
  */
-export async function setSeqAtLeast(key: string, min: number) {
-  const n = Number.isFinite(min) ? Math.floor(min) : 0;
-  await Counter.findOneAndUpdate(
-    { key },
-    {
-      $max: { seq: n },
-      $setOnInsert: { key },
-    },
-    { upsert: true, new: true }
-  );
-}
-
-/**
- * Atomic increment with optional starting value.
- * startAt=1001 bo‘lsa: birinchi qiymat 1001 bo‘ladi.
- */
-export async function nextSeq(key: string, startAt?: number) {
-  // startAt berilsa: seq kamida (startAt - 1) bo‘lsin, keyin +1 qilinadi
-  if (typeof startAt === 'number' && Number.isFinite(startAt)) {
-    await setSeqAtLeast(key, Math.floor(startAt) - 1);
-  }
+export async function nextSeq(key: string, startAt = 1) {
+  const start = Math.max(1, Math.floor(startAt));
 
   const doc = await Counter.findOneAndUpdate(
     { key },
-    {
-      $inc: { seq: 1 },
-      $setOnInsert: { key },
-    },
+    [
+      {
+        $set: {
+          key,
+          seq: {
+            $add: [{ $ifNull: ['$seq', start - 1] }, 1],
+          },
+        },
+      },
+    ],
     { new: true, upsert: true }
   ).lean();
 
-  return doc?.seq ?? (typeof startAt === 'number' ? Math.floor(startAt) : 1);
+  return typeof doc?.seq === 'number' ? doc.seq : start;
+}
+
+/**
+ * Ensure counter is at least minValue.
+ * Safe for both existing and non-existing documents.
+ */
+export async function setSeqAtLeast(key: string, minValue: number) {
+  const min = Math.max(0, Math.floor(minValue));
+  await Counter.findOneAndUpdate(
+    { key },
+    [
+      {
+        $set: {
+          key,
+          seq: {
+            $cond: [
+              { $gte: [{ $ifNull: ['$seq', 0] }, min] },
+              { $ifNull: ['$seq', min] },
+              min,
+            ],
+          },
+        },
+      },
+    ],
+    { upsert: true, new: true }
+  );
 }

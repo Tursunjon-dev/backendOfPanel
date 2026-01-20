@@ -4,15 +4,14 @@ import fs from 'fs';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import path from 'path';
+
 import { ENV } from './config/env';
 import { connectMongo } from './config/mongo';
 import { errorHandler, notFound } from './middleware/error';
 import { adminRouter } from './routes/admin';
-import { publicRouter } from './routes/public';
-import { ensureItemCounter } from './services/seqInit';
+
 async function main() {
   await connectMongo();
-  await ensureItemCounter();
 
   const app = express();
   const publicDir = path.join(process.cwd(), 'public');
@@ -90,7 +89,7 @@ async function main() {
 
   app.use(notFound);
   app.use(errorHandler);
-  app.use(publicRouter);
+
   app.listen(ENV.PORT, () => {
     // eslint-disable-next-line no-console
     console.log(`Backend running: http://localhost:${ENV.PORT}`);

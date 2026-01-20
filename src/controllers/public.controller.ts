@@ -1,41 +1,50 @@
-import type { Request, Response } from 'express';
 import fs from 'fs';
 import path from 'path';
+import type { Request, Response } from 'express';
 
-function getPublicDir(req: Request) {
-  const publicDir = req.app.get('publicDir') as string | undefined;
-  if (!publicDir) throw new Error('publicDir is not set on app');
-  return publicDir;
+/**
+ * Public endpoints for mobile app / kiosk.
+ * These serve the JSON files generated into <publicDir>/data.
+ */
+
+function readJsonFile(filePath: string) {
+  const raw = fs.readFileSync(filePath, 'utf8');
+  return JSON.parse(raw);
 }
 
-export function menuJson(req: Request, res: Response) {
+function setCommonHeaders(res: Response) {
+  // Avoid aggressive caching so the app sees updates fast.
+  // (You can still rely on version.json checks.)
+  res.setHeader('Cache-Control', 'no-store');
+}
+
+export async function menuJson(req: Request, res: Response) {
   try {
-    const publicDir = getPublicDir(req);
+    const publicDir = req.app.get('publicDir') as string;
     const filePath = path.join(publicDir, 'data', 'menu.json');
-
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'menu.json not found. Run Publish first.' });
+      return res.status(404).json({ error: 'menu.json not found. Publish menu first.' });
     }
-
-    // Cache buzilmasin (tez update uchun)
-    res.setHeader('Cache-Control', 'no-store');
-    return res.sendFile(filePath);
+    const data = readJsonFile(filePath);
+    setCommonHeaders(res);
+    return res.json(data);
   } catch (e: any) {
     return res.status(500).json({ error: e?.message || 'Failed to read menu.json' });
   }
 }
 
-export function versionJson(req: Request, res: Response) {
+export async function versionJson(req: Request, res: Response) {
   try {
-    const publicDir = getPublicDir(req);
+    const publicDir = req.app.get('publicDir') as string;
     const filePath = path.join(publicDir, 'data', 'version.json');
-
     if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'version.json not found. Run Publish first.' });
+      // If version does not exist yet, return a safe default.
+      setCommonHeaders(res);
+      return res.json({ version: 0, exportedAt: '', checksum: '' });
     }
-
-    res.setHeader('Cache-Control', 'no-store');
-    return res.sendFile(filePath);
+    const data = readJsonFile(filePath);
+    setCommonHeaders(res);
+    return res.json(data);
   } catch (e: any) {
     return res.status(500).json({ error: e?.message || 'Failed to read version.json' });
   }

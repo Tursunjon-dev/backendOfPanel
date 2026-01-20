@@ -38,7 +38,16 @@ export async function login(req: Request, res: Response) {
 // -----------------
 export async function getCategories(_req: Request, res: Response) {
   const list = await Category.find().sort({ name: 1 }).lean();
-  return res.json(list);
+  const base = ENV.PUBLIC_BASE_URL || '';
+  return res.json(
+    list.map((c: any) => ({
+      ...c,
+      // legacy UI compatibility
+      category: c.slug,
+      img: c.image || '',
+      imageUrl: c.image ? `${base}/images/menu/${encodeURIComponent(c.image)}` : '',
+    }))
+  );
 }
 
 export async function createCategory(req: Request, res: Response) {
@@ -122,7 +131,15 @@ async function ensureItemSeqAtLeastMaxId() {
 
 export async function getItems(_req: Request, res: Response) {
   const items = await Item.find().sort({ id: -1 }).lean();
-  return res.json(items);
+  const base = ENV.PUBLIC_BASE_URL || '';
+  return res.json(
+    items.map((i: any) => ({
+      ...i,
+      // legacy UI compatibility
+      category: i.categorySlug,
+      imageUrl: i.image ? `${base}/images/menu/${encodeURIComponent(i.image)}` : '',
+    }))
+  );
 }
 
 export async function createItem(req: Request, res: Response) {
@@ -131,20 +148,32 @@ export async function createItem(req: Request, res: Response) {
   const cat = await Category.findOne({ slug: String(categorySlug || '').trim() }).lean();
   if (!cat) return res.status(400).json({ error: 'Kategoriya topilmadi' });
 
-  await ensureItemSeqAtLeastMaxId();
-  const id = await nextSeq('item_id', 1001);
-
-  const doc = await Item.create({
-    id,
+  const payload = {
     title: String(title || '').trim() || 'Nomsiz',
     categorySlug: cat.slug,
     categoryName: cat.name,
     price: typeof price === 'number' ? price : Number(price) || 0,
     image: (image || '').trim(),
     isActive: isActive !== false,
-  });
+  };
 
-  return res.status(201).json(doc);
+  // Defensive: sequence can drift after imports/manual DB edits.
+  // Try a few times if Mongo reports duplicate id.
+  for (let attempt = 0; attempt < 3; attempt++) {
+    await ensureItemSeqAtLeastMaxId();
+    const id = await nextSeq('item_id', 1001);
+    try {
+      const doc = await Item.create({ id, ...payload });
+      return res.status(201).json(doc);
+    } catch (err: any) {
+      if (err?.code === 11000 && String(err?.message || '').includes('id_1')) {
+        // sync counter and retry
+        continue;
+      }
+      throw err;
+    }
+  }
+  return res.status(500).json({ error: 'Item ID conflict. Try again.' });
 }
 
 export async function updateItem(req: Request, res: Response) {

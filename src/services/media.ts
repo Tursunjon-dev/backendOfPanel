@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export function listMediaFiles(publicDir: string) {
+export function listMediaFiles() {
   const dir = path.join(process.cwd(), 'public', 'images', 'menu');
   if (!fs.existsSync(dir)) return [];
   const files = fs.readdirSync(dir).filter(f => /\.(webp)$/i.test(f));
