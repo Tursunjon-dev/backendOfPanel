@@ -84,7 +84,17 @@ async function main() {
       immutable: true,
     })
   );
-  app.use('/data', publicCors, express.static(path.join(publicDir, 'data'), { maxAge: '10m' }));
+  // Menu JSON must update immediately after publish; disable caching.
+  app.use(
+    '/data',
+    publicCors,
+    express.static(path.join(publicDir, 'data'), {
+      maxAge: 0,
+      setHeaders: res => {
+        res.setHeader('Cache-Control', 'no-store, max-age=0');
+      },
+    })
+  );
   app.get('/health', publicCors, (_req, res) => res.json({ ok: true }));
 
   app.use(notFound);

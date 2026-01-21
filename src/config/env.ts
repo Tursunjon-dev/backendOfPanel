@@ -1,31 +1,56 @@
-import dotenv from 'dotenv';
+import 'dotenv/config';
 
-dotenv.config();
-
-function must(name: string, v: string | undefined) {
-  if (!v) throw new Error(`Missing env: ${name}`);
-  return v;
+function str(name: string, def = ''): string {
+  const v = process.env[name];
+  return (v ?? def).trim();
 }
 
-function splitCsv(v: string | undefined) {
-  return (v ?? '')
+function num(name: string, def: number): number {
+  const raw = str(name, String(def));
+  const n = Number(raw);
+  return Number.isFinite(n) ? n : def;
+}
+
+function csv(name: string, def = ''): string[] {
+  const raw = str(name, def);
+  return raw
     .split(',')
     .map(s => s.trim())
     .filter(Boolean);
 }
 
+/**
+ * Centralized, typed env access.
+ * Keep this file build-safe (no placeholders / ellipsis).
+ */
 export const ENV = {
-  NODE_ENV: process.env.NODE_ENV || 'development',
-  PORT: Number(process.env.PORT || 4000),
+  NODE_ENV: str('NODE_ENV', 'production'),
+  PORT: num('PORT', 8080),
 
-  MONGO_URI: must('MONGO_URI', process.env.MONGO_URI),
-  PUBLIC_BASE_URL: process.env.PUBLIC_BASE_URL || '',
+  // Mongo
+  MONGO_URI: str('MONGO_URI', str('MONGODB_URI', '')),
 
-  ADMIN_EMAIL: must('ADMIN_EMAIL', process.env.ADMIN_EMAIL),
-  ADMIN_PASSWORD: must('ADMIN_PASSWORD', process.env.ADMIN_PASSWORD),
-  JWT_SECRET: must('JWT_SECRET', process.env.JWT_SECRET),
+  // Public base url (used to build absolute image URLs in admin responses)
+  PUBLIC_BASE_URL: str('PUBLIC_BASE_URL', ''),
 
-  ADMIN_CORS_ORIGINS: splitCsv(process.env.ADMIN_CORS_ORIGINS),
-  MAX_JSON_MB: Number(process.env.MAX_JSON_MB || 5),
-  CACHE_TTL_MS: Number(process.env.CACHE_TTL_MS || 30000),
+  // Optional branding/dev contact shown in apps
+  BRAND_NAME: str('BRAND_NAME', 'Coffee Fresh'),
+  DEV_TELEGRAM: str('DEV_TELEGRAM', '@almaut01'),
+  DEV_PHONE: str('DEV_PHONE', '+998 93 285 75 35'),
+
+  // Admin auth
+  ADMIN_EMAIL: str('ADMIN_EMAIL', ''),
+  ADMIN_PASSWORD: str('ADMIN_PASSWORD', ''),
+  JWT_SECRET: str('JWT_SECRET', 'change-me'),
+
+  // CORS
+  ADMIN_CORS_ORIGINS: csv('ADMIN_CORS_ORIGINS', 'http://localhost:5173,http://localhost:8081'),
+
+  // Limits
+  MAX_JSON_MB: num('MAX_JSON_MB', 5),
+
+  // Optional caching (if you add caching later)
+  CACHE_TTL_MS: num('CACHE_TTL_MS', 60_000),
 } as const;
+
+export type Env = typeof ENV;

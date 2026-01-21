@@ -1,51 +1,34 @@
-import fs from 'fs';
 import path from 'path';
 import type { Request, Response } from 'express';
 
-/**
- * Public endpoints for mobile app / kiosk.
- * These serve the JSON files generated into <publicDir>/data.
- */
+import { ENV } from '../config/env';
 
-function readJsonFile(filePath: string) {
-  const raw = fs.readFileSync(filePath, 'utf8');
-  return JSON.parse(raw);
+function sendFileNoCache(res: Response, absPath: string) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
+  return res.sendFile(absPath);
 }
 
-function setCommonHeaders(res: Response) {
-  // Avoid aggressive caching so the app sees updates fast.
-  // (You can still rely on version.json checks.)
-  res.setHeader('Cache-Control', 'no-store');
+export async function getBrand(_req: Request, res: Response) {
+  // Public info shown in app (Sync Settings / Dev Contact)
+  return res.json({
+    name: ENV.BRAND_NAME,
+    telegram: ENV.DEV_TELEGRAM,
+    phone: ENV.DEV_PHONE,
+  });
 }
 
-export async function menuJson(req: Request, res: Response) {
-  try {
-    const publicDir = req.app.get('publicDir') as string;
-    const filePath = path.join(publicDir, 'data', 'menu.json');
-    if (!fs.existsSync(filePath)) {
-      return res.status(404).json({ error: 'menu.json not found. Publish menu first.' });
-    }
-    const data = readJsonFile(filePath);
-    setCommonHeaders(res);
-    return res.json(data);
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || 'Failed to read menu.json' });
-  }
+export async function getMenuJson(req: Request, res: Response) {
+  const publicDir = req.app.get('publicDir') as string;
+  const abs = path.join(publicDir, 'data', 'menu.json');
+  return sendFileNoCache(res, abs);
 }
 
-export async function versionJson(req: Request, res: Response) {
-  try {
-    const publicDir = req.app.get('publicDir') as string;
-    const filePath = path.join(publicDir, 'data', 'version.json');
-    if (!fs.existsSync(filePath)) {
-      // If version does not exist yet, return a safe default.
-      setCommonHeaders(res);
-      return res.json({ version: 0, exportedAt: '', checksum: '' });
-    }
-    const data = readJsonFile(filePath);
-    setCommonHeaders(res);
-    return res.json(data);
-  } catch (e: any) {
-    return res.status(500).json({ error: e?.message || 'Failed to read version.json' });
-  }
+export async function getVersionJson(req: Request, res: Response) {
+  const publicDir = req.app.get('publicDir') as string;
+  const abs = path.join(publicDir, 'data', 'version.json');
+  return sendFileNoCache(res, abs);
 }
+
+// Backward-compatible exports expected by routes/public.ts
+export const menuJson = getMenuJson;
+export const versionJson = getVersionJson;

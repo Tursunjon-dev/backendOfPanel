@@ -1,91 +1,88 @@
-﻿import crypto from 'crypto';
-import fs from 'fs';
-import path from 'path';
+import crypto from 'crypto';
 
 import Category from '../models/Category';
 import Item from '../models/Item';
 
-function sha1(s: string) {
-  return crypto.createHash('sha1').update(s).digest('hex');
+function sha1(input: string) {
+  return crypto.createHash('sha1').update(input).digest('hex');
 }
 
-/**
- * DB -> payload (menu.json schema: categorySlug/categoryName)
- * Eslatma: appingiz shu formatni kutyapti:
- * items: { id,title,categorySlug,categoryName,price,image,isActive }
- * categories: { name,slug,image }
- */
-export async function buildMenuPayload() {
-  const categories = await Category.find().sort({ name: 1 }).lean();
-  const items = await Item.find().sort({ id: 1 }).lean();
+export type MenuExport = {
+  meta: {
+    exportedAt: string;
+    totalItems: number;
+    totalCategories: number;
+    schemaVersion: string;
+    checksum: string;
+  };
+  categories: Array<{ name: string; slug: string; image: string }>;
+  items: Array<{
+    id: number;
+    title: string;
+    categorySlug: string;
+    categoryName: string;
+    price: number;
+    image: string;
+    isActive: boolean;
+  }>;
+};
 
-  const payload = {
+/**
+ * DB -> menu.json payload.
+ * App kutadigan schema:
+ *  categories: { name, slug, image }
+ *  items: { id, title, categorySlug, categoryName, price, image, isActive }
+ */
+export async function buildMenuExport(): Promise<MenuExport> {
+  const exportedAt = new Date().toISOString();
+
+  const [categoriesRaw, itemsRaw] = await Promise.all([
+    Category.find().sort({ name: 1 }).lean(),
+    Item.find().sort({ id: 1 }).lean(),
+  ]);
+
+  const categories = categoriesRaw.map((c: any) => ({
+    name: String(c.name ?? '').trim(),
+    slug: String(c.slug ?? '').trim(),
+    image: String(c.image ?? '').trim(),
+  }));
+
+  const items = itemsRaw.map((it: any) => ({
+    id: Number(it.id),
+    title: String(it.title ?? '').trim(),
+    categorySlug: String(it.categorySlug ?? '').trim(),
+    categoryName: String(it.categoryName ?? '').trim(),
+    price: Number(it.price),
+    image: String(it.image ?? '').trim(),
+    isActive: it.isActive !== false,
+  }));
+
+  // checksum must ignore itself
+  const base: Omit<MenuExport, 'meta'> & { meta: Omit<MenuExport['meta'], 'checksum'> } = {
     meta: {
-      exportedAt: new Date().toISOString(),
+      exportedAt,
       totalItems: items.length,
       totalCategories: categories.length,
       schemaVersion: '1.0',
-      checksum: '',
     },
-    categories: categories.map((c: any) => ({
-      name: c.name,
-      slug: c.slug,
-      image: c.image || '',
-    })),
-    items: items.map((it: any) => ({
-      id: it.id,
-      title: it.title,
-      categorySlug: it.categorySlug,
-      categoryName: it.categoryName,
-      price: it.price,
-      image: it.image || '',
-      isActive: !!it.isActive,
-    })),
+    categories,
+    items,
   };
 
-  const jsonForChecksum = JSON.stringify({ ...payload, meta: { ...payload.meta, checksum: '' } });
-  const checksum = sha1(jsonForChecksum);
+  const checksum = sha1(JSON.stringify(base));
 
-  payload.meta.checksum = checksum;
-  return payload;
-}
-
-/** menu.json ni public/data ga yozadi */
-export async function writeMenuFiles(publicDir: string) {
-  const dataDir = path.join(publicDir, 'data');
-  fs.mkdirSync(dataDir, { recursive: true });
-
-  const menu = await buildMenuPayload();
-
-  fs.writeFileSync(path.join(dataDir, 'menu.json'), JSON.stringify(menu, null, 2), 'utf8');
-  fs.writeFileSync(
-    path.join(dataDir, 'version.json'),
-    JSON.stringify(
-      {
-        exportedAt: menu.meta.exportedAt,
-        checksum: menu.meta.checksum,
-        schemaVersion: menu.meta.schemaVersion,
-      },
-      null,
-      2
-    ),
-    'utf8'
-  );
-
-  return { ok: true, exportedAt: menu.meta.exportedAt, checksum: menu.meta.checksum };
-}
-
-/** Agar bir joyda version.json qaytarish kerak bo‘lsa */
-export async function getVersionJson(publicDir: string) {
-  const filePath = path.join(publicDir, 'data', 'version.json');
-  if (fs.existsSync(filePath)) {
-    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
-  }
-  // yo‘q bo‘lsa DB dan build qilib qaytaramiz
-  const menu = await buildMenuPayload();
   return {
-    exportedAt: menu.meta.exportedAt,
-    checksum: menu.meta.checksum,
-    schemaVersion: menu.meta.schemaVersion,
+    ...base,
+    meta: { ...base.meta, checksum },
   };
+}
+
+/**
+ * Backward-compatible export used by publish service.
+ * Returns { menu, checksum } where checksum matches menu.meta.checksum.
+ */
+export async function exportMenu(exportedAt: string): Promise<{ menu: any; checksum: string }> {
+  const menu = await buildMenuExport();
+  const checksum = String(menu?.meta?.checksum || '');
+  return { menu, checksum };
 }
